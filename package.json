@@ -1,0 +1,115 @@
+{
+    "name": "vscode-dotnet-projects",
+    "displayName": "vscode-dotnet-projects",
+    "description": "todo",
+    "version": "0.9.0",
+    "license": "MIT",
+    "publisher": "vs-marketplace-vasek",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Vasek-gh/vscode-dotnet-projects"
+    },
+    "main": "./dist/extension.js",
+    "engines": {
+        "vscode": "^1.97.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "dotnet",
+        "project"
+    ],
+    "scripts": {
+        "lint": "eslint ./{src,tests}/** --max-warnings 0",
+        "lint-check": "eslint ./{src,tests}/** --max-warnings 100",
+
+        "pretest": "tsc -p . --outDir out && tsc-alias --outDir out && copyfiles -a \"tests/project/**/*.*\" out/",
+        "test": "vscode-test",
+        "coverage": "vscode-test --coverage",
+
+        "check-types": "tsc --noEmit",
+        "compile": "npm run check-types && npm run lint && node esbuild.js",
+        "package": "npm run check-types && npm run lint && node esbuild.js --production",
+        "vscode:prepublish": "npm run package",
+
+        "watch": "npm-run-all -p watch:*",
+        "watch:esbuild": "node esbuild.js --watch",
+        "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+        "watch-tests": "tsc -p . -w --outDir out"
+    },
+    "dependencies": {
+    },
+    "devDependencies": {
+        "@stylistic/eslint-plugin": "^4.4.1",
+        "@types/mocha": "^10.0.10",
+        "@types/node": "20.x",
+        "@types/vscode": "^1.97.0",
+        "@typescript-eslint/eslint-plugin": "^8.31.1",
+        "@typescript-eslint/parser": "^8.31.1",
+        "@vscode/test-cli": "^0.0.10",
+        "@vscode/test-electron": "^2.5.2",
+        "copyfiles": "^2.4.1",
+        "esbuild": "^0.25.3",
+        "eslint": "^9.25.1",
+        "npm-run-all": "^4.1.5",
+        "tsc-alias": "^1.8.16",
+        "typescript": "^5.8.3"
+    },
+    "contributes": {
+        "commands": [
+            {
+                "command": "vscode-dotnet-projects.create-solution",
+                "title": "Create solution",
+                "category": "Dotnet Solution"
+            },
+            {
+                "command": "vscode-dotnet-projects.select-solution",
+                "title": "Select solution",
+                "category": "Dotnet Solution"
+            },
+            {
+                "command": "vscode-dotnet-projects.show-solution",
+                "title": "Show solution",
+                "category": "Dotnet Solution"
+            },
+
+            {
+                "command": "vscode-dotnet-projects.create-project",
+                "title": "Create project",
+                "category": "Dotnet Solution"
+            },
+            {
+                "command": "vscode-dotnet-projects.add-project",
+                "title": "Add project",
+                "category": "Dotnet Solution"
+            },
+            {
+                "command": "vscode-dotnet-projects.remove-project",
+                "title": "Remove project",
+                "category": "Dotnet Solution"
+            },
+
+
+            {
+                "command": "vscode-dotnet-projects.add-project-reference",
+                "title": "Add project reference",
+                "category": "Dotnet Projects"
+            },
+            {
+                "command": "vscode-dotnet-projects.remove-project-reference",
+                "title": "Remove project reference",
+                "category": "Dotnet Projects"
+            }
+        ],
+        "keybindings": [
+        ],
+        "menus": {
+        },
+        "configuration": {
+        },
+        "configurationDefaults": {
+        }
+    }
+}
