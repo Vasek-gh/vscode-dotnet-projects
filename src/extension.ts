@@ -1,25 +1,26 @@
 import * as vscode from "vscode";
-import { FileSystemService } from "./services/file-system/FileSystemService";
 import { DefaultFileSystemService } from "./services/file-system/DefaultFileSystemService";
 import { Logger } from "./tools/Logger";
 import { Utils } from "./tools/Utils";
 import { Config } from "./configuration/Config";
 import { Extension } from "./tools/Extension";
 import { Path } from "./tools/Path";
-import { DotnetService } from "./services/dotnet/DotnetService";
+import { DefaultDotnetService } from "./services/dotnet/DefaultDotnetService";
 import { CreateSolutionCommand } from "./commands/create-solution/CreateSolutionCommand";
 import { AddProjectCommand } from "./commands/AddProjectCommand";
 import { CreateProjectCommand } from "./commands/create-project/CreateProjectCommand";
 import { CacheService } from "./services/CacheService";
-import { Shell } from "./tools/Shell";
+import { DefaultShellService } from "./services/shell/DefaultShellService";
 import { SelectSolutionCommand } from "./commands/SelectSolutionCommand";
-import { PreferencesService } from "./services/PreferencesService";
+import { DefaultPreferencesService } from "./services/preferences/DefaultPreferencesService";
 import { ShowSolutionCommand } from "./commands/ShowSolutionCommand";
 import { RemoveProjectCommand } from "./commands/RemoveProjectCommand";
 import { AddProjectReferenceCommand } from "./commands/AddProjectReferencesCommand";
 import { RemoveProjectReferencesCommand } from "./commands/RemoveProjectReferencesCommand";
 import { SelectorFactory } from "./selectors/SelectorFactory";
 import { Command } from "./commands/Command";
+import { DotnetService } from "./services/dotnet/DotnetService";
+import { ShellService } from "./services/shell/ShellService";
 
 /**
  * Entry point of this extension
@@ -51,14 +52,14 @@ class Host implements Extension, vscode.Disposable {
 
             const config = new Config(this);
 
-            const shell = this.registerObject(new Shell(this.logger));
             const cache = this.registerObject(new CacheService(this.logger));
-            const dotnet = this.registerObject(new DotnetService(this.logger, shell, cache));
+            const shell = this.registerObject(new DefaultShellService(this.logger));
+            const dotnet = this.registerObject(new DefaultDotnetService(this.logger, shell, cache));
             const fileSystem = this.registerObject(new DefaultFileSystemService(this.logger));
-            const preferences = this.registerObject(new PreferencesService(context));
+            const preferences = this.registerObject(new DefaultPreferencesService(context));
             const selectorFactory = this.registerObject(new SelectorFactory(dotnet, fileSystem, preferences));
 
-            this.registerCommand(new CreateSolutionCommand(this.logger, dotnet));
+            this.registerCommand(new CreateSolutionCommand(this.logger, dotnet, preferences));
             this.registerCommand(new SelectSolutionCommand(this.logger, dotnet, preferences));
             this.registerCommand(new ShowSolutionCommand(this.logger, dotnet, selectorFactory));
 

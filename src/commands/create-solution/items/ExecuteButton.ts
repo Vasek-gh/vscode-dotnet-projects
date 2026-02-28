@@ -1,10 +1,9 @@
 import { Path } from "@src/tools/Path";
 import { State } from "./State";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
-import { WizzardItem } from "./WizzardItem";
 import { SlnFormat } from "@src/services/dotnet/SlnFormat";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
 
-export class CreateSolutionButton implements WizzardItem {
+export class ExecuteButton {
     public label: string;
     public readonly alwaysShow: boolean = true;
 
@@ -19,11 +18,11 @@ export class CreateSolutionButton implements WizzardItem {
         const [solutionName, format] = this.makeName();
 
         const commandResult = await this.dotnetService.createSolution(this.state.directory, solutionName, format);
-        if (await commandResult.showError("Create solution fail", true)) {
+        if (await commandResult.handleError("Create solution fail", true)) {
             return undefined;
         }
 
-        return this.state.directory.appendFile(`${solutionName}${format.extension}`);
+        return commandResult.data;
     }
 
     private makeName(): [string, SlnFormat] {

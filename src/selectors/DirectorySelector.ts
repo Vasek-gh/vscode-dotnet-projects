@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { Path } from "@src/tools/Path";
-import { QuickPickTool } from "@src/tools/QuickPickTool";
+import { QuickPickUtils } from "@src/tools/QuickPickUtils";
 
 class DirectoryItem implements vscode.QuickPickItem {
     public readonly label: string;
@@ -36,13 +36,17 @@ export class DirectorySelector {
             return undefined;
         }
 
+        if (items.length === 1) {
+            return items[0].directory;
+        }
+
         const currentItem = items.find(i =>
             current !== undefined
             && i.kind !== vscode.QuickPickItemKind.Separator
             && i.directory.isSame(current)
         );
 
-        return await QuickPickTool.execute(
+        return await QuickPickUtils.executeSelector(
             "Select directory",
             "Start typing for filtering",
             items,

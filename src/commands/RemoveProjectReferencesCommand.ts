@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import { Logger } from "@src/tools/Logger";
 import { Path } from "@src/tools/Path";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
 import { ProjectSelector } from "@src/selectors/ProjectSelector";
 import { Command } from "./Command";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
 
 export class RemoveProjectReferencesCommand implements Command {
     public readonly id = "remove-project-reference";

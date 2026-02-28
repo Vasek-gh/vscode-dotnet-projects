@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import { Logger } from "../tools/Logger";
 import { Path } from "../tools/Path";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
-import { PreferencesService } from "@src/services/PreferencesService";
-import { EntitiesKeys } from "@src/tools/EntitiesKeys";
+import { DefaultPreferencesService } from "@src/services/preferences/DefaultPreferencesService";
 import { Command } from "./Command";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
+import { QuickPickUtils } from "@src/tools/QuickPickUtils";
 
 class SolutionItem implements vscode.QuickPickItem {
     public readonly label: string;
@@ -34,7 +34,7 @@ export class SelectSolutionCommand implements Command {
     public constructor(
         private readonly logger: Logger,
         private readonly dotnet: DotnetService,
-        private readonly preferences: PreferencesService
+        private readonly preferences: DefaultPreferencesService
     ) {
         this.logger = logger.create(this);
     }
@@ -47,50 +47,30 @@ export class SelectSolutionCommand implements Command {
             return; // todo warning
         }
 
-        const currentDefault = this.preferences.getValue<string>(EntitiesKeys.activeSolution);
-        const currentSolution = currentDefault === undefined
-            ? undefined
-            : Path.fromFile(vscode.Uri.file(currentDefault));
+        const currentSolution = this.preferences.getActiveSolution();
 
-        const disposables: vscode.Disposable[] = [];
-        try {
-            await new Promise<Path | undefined>((resolve) => {
-                const quickPick = vscode.window.createQuickPick<SolutionItem>();
-                disposables.push(quickPick);
-
-                quickPick.title = "Select default solution";
-                quickPick.matchOnDescription = true;
-                quickPick.items = solutions.map(s => {
-                    const isDefault = currentSolution !== undefined && s.isSame(currentSolution);
-                    return new SolutionItem(s, isDefault);
-                });
-
-                quickPick.show();
-
-                disposables.push(
-                    quickPick.onDidTriggerItemButton(() => {
-                        this.preferences.setValue(EntitiesKeys.activeSolution, undefined);
-                        resolve(undefined);
-                    })
-                );
-
-                disposables.push(
-                    quickPick.onDidAccept(() => {
-                        const solution = quickPick.selectedItems[0].path;
-                        this.preferences.setValue(EntitiesKeys.activeSolution, solution.uri.fsPath);
-                        resolve(solution);
-                    })
-                );
-
-                disposables.push(
-                    quickPick.onDidHide(() => {
-                        resolve(undefined);
-                    })
-                );
+        await QuickPickUtils.execute<SolutionItem, Path>((quickPick, resolve) => {
+            quickPick.title = "Select default solution";
+            quickPick.matchOnDescription = true;
+            quickPick.items = solutions.map(s => {
+                const isDefault = currentSolution !== undefined && s.isSame(currentSolution);
+                return new SolutionItem(s, isDefault);
             });
-        }
-        finally {
-            disposables.forEach(d => d.dispose());
-        }
+
+            return [
+                quickPick.onDidHide(() => {
+                    resolve(undefined);
+                }),
+                quickPick.onDidTriggerItemButton(() => {
+                    this.preferences.setActiveSolution(undefined);
+                    resolve(undefined);
+                }),
+                quickPick.onDidAccept(() => {
+                    const solution = quickPick.selectedItems[0].path;
+                    this.preferences.setActiveSolution(solution);
+                    resolve(solution);
+                }),
+            ];
+        });
     }
 }

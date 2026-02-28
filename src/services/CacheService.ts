@@ -1,5 +1,4 @@
 import { Logger } from "@src/tools/Logger";
-import { log } from "console";
 
 export class CacheService {
     private readonly items = new Map<string, any>();

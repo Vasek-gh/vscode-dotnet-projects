@@ -1,23 +1,23 @@
 import { Path } from "@src/tools/Path";
 import { State } from "./State";
-import { FormatSelector } from "./selectors/FormatSelector";
+import { DirectorySelector } from "@src/selectors/DirectorySelector";
 
-export class SetFormatItem {
+export class SetDirectoryItem {
     public label: string = "";
     public description: string = "";
     public readonly alwaysShow: boolean = true;
 
     public constructor(
         private readonly state: State,
-        private readonly formatSelector: FormatSelector,
+        private readonly directorySelector: DirectorySelector,
     ) {
         this.applyState();
     }
 
     public async execute(): Promise<Path | undefined> {
-        const template = await this.formatSelector.execute(this.state.format);
-        if (template) {
-            this.state.format = template;
+        const directory = await this.directorySelector.execute(this.state.directory);
+        if (directory) {
+            this.state.directory = directory;
             this.applyState();
         }
 
@@ -25,7 +25,7 @@ export class SetFormatItem {
     }
 
     private applyState(): void {
-        this.label = "Format:";
-        this.description = this.state.format.title;
+        this.label = "Directory:";
+        this.description = this.state.directory.uri.fsPath;
     }
 }

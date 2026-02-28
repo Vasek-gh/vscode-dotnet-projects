@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
 import { TemplateInfo } from "@src/services/dotnet/TemplateInfo";
-import { Preferences } from "../Preferences";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
+import { QuickPickUtils } from "@src/tools/QuickPickUtils";
+import { PreferencesService } from "@src/services/preferences/PreferencesService";
 
 class TemplateItem implements vscode.QuickPickItem {
     public readonly label: string;
@@ -16,11 +17,11 @@ class TemplateItem implements vscode.QuickPickItem {
 }
 
 export class TemplateSelector {
-    private readonly preferences: Preferences;
+    private readonly preferences: PreferencesService;
     private readonly dotnetService: DotnetService;
 
     public constructor(
-        preferences: Preferences,
+        preferences: PreferencesService,
         dotnetService: DotnetService
     ) {
         this.preferences = preferences;
@@ -33,32 +34,21 @@ export class TemplateSelector {
             return undefined;
         }
 
-        const disposables: vscode.Disposable[] = [];
-        try {
-            return await new Promise<TemplateInfo | undefined>((resolve) => {
-                const quickPick = vscode.window.createQuickPick<TemplateItem>();
-                quickPick.title = "Select project type";
-                quickPick.items = templates.map(t => new TemplateItem(t));
-                quickPick.show();
+        return await QuickPickUtils.execute<TemplateItem, TemplateInfo>((quickPick, resolve) => {
+            quickPick.title = "Select project type";
+            quickPick.items = templates.map(t => new TemplateItem(t));
 
-                disposables.push(
-                    quickPick.onDidAccept(() => {
-                        resolve(quickPick.selectedItems[0].template);
-                        quickPick.dispose();
-                    })
-                );
-
-                disposables.push(
-                    quickPick.onDidHide(() => {
-                        resolve(undefined);
-                        quickPick.dispose();
-                    })
-                );
-            });
-        }
-        finally {
-            disposables.forEach(d => d.dispose());
-        }
+            return [
+                quickPick.onDidHide(() => {
+                    resolve(undefined);
+                }),
+                quickPick.onDidAccept(() => {
+                    var result = quickPick.selectedItems[0].template;
+                    this.preferences.pushTemplateToFavorites(result);
+                    resolve(result);
+                }),
+            ];
+        });
     }
 
     private async getTemplates(current: TemplateInfo | undefined): Promise<TemplateInfo[]> {

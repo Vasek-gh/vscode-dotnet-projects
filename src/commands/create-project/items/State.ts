@@ -7,5 +7,7 @@ export interface State {
     directory: Path;
     template: TemplateInfo;
     autoSolutionPrefix: boolean;
-    lockResolve: boolean;
+    createProjectFolder: boolean;
+    createSolution: boolean | undefined;
+    lockHide: boolean;
 }

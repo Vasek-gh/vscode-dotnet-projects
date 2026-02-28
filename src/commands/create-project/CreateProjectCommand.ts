@@ -1,13 +1,12 @@
 import * as vscode from "vscode";
 import { Logger } from "../../tools/Logger";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
 import { CreateProjectWizzard as CreateProjectWizzard } from "./CreateProjectWizzard";
 import { TemplateSelector } from "./selectors/TemplateSelector";
 import { ProjectDirectorySelector } from "./selectors/ProjectDirectorySelector";
-import { PreferencesService } from "@src/services/PreferencesService";
-import { Preferences } from "./Preferences";
 import { SelectorFactory } from "@src/selectors/SelectorFactory";
 import { Command } from "../Command";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
+import { PreferencesService } from "@src/services/preferences/PreferencesService";
 
 export class CreateProjectCommand implements Command {
     public readonly id = "create-project";
@@ -24,14 +23,12 @@ export class CreateProjectCommand implements Command {
     public async execute(): Promise<void> {
         this.logger.trace("Execute");
 
-        const wizzardPreferences = new Preferences(this.preferences);
-
         const wizzard = new CreateProjectWizzard(
             this.logger,
-            wizzardPreferences,
+            this.preferences,
             this.dotnet,
             this.selectorFactory.createSolutionSelector(),
-            new TemplateSelector(wizzardPreferences, this.dotnet),
+            new TemplateSelector(this.preferences, this.dotnet),
             new ProjectDirectorySelector(this.dotnet, this.selectorFactory.createDirectorySelector())
         );
 

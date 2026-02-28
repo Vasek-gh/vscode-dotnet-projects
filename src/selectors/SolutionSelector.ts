@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
 import { Path } from "@src/tools/Path";
-import { PreferencesService } from "@src/services/PreferencesService";
+import { DefaultPreferencesService } from "@src/services/preferences/DefaultPreferencesService";
 import { EntitiesKeys } from "@src/tools/EntitiesKeys";
 import { FileSystemService } from "@src/services/file-system/FileSystemService";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
+import { QuickPickUtils } from "@src/tools/QuickPickUtils";
 
 class SolutionItem implements vscode.QuickPickItem {
     public readonly label: string;
@@ -20,12 +21,12 @@ class SolutionItem implements vscode.QuickPickItem {
 export class SolutionSelector {
     private readonly dotnet: DotnetService;
     private readonly fileSystem: FileSystemService;
-    private readonly preferences: PreferencesService;
+    private readonly preferences: DefaultPreferencesService;
 
     public constructor(
         dotnet: DotnetService,
         fileSystem: FileSystemService,
-        preferences: PreferencesService,
+        preferences: DefaultPreferencesService,
     ) {
         this.dotnet = dotnet;
         this.fileSystem = fileSystem;
@@ -34,7 +35,7 @@ export class SolutionSelector {
 
     public async execute(current: Path | undefined, force: boolean = false): Promise<Path | undefined> {
         if (!force) {
-            const activeSolution = this.getActiveSolution();
+            const activeSolution = await this.getActiveSolution();
             if (activeSolution) {
                 return activeSolution;
             }
@@ -56,32 +57,19 @@ export class SolutionSelector {
             return solutions[0];
         }
 
-        const disposables: vscode.Disposable[] = [];
-        try {
-            return await new Promise<Path | undefined>((resolve) => {
-                const quickPick = vscode.window.createQuickPick<SolutionItem>();
-                quickPick.title = "Select solution";
-                quickPick.items = solutions.map(s => new SolutionItem(s));
-                quickPick.show();
+        return await QuickPickUtils.execute<SolutionItem, Path>((quickPick, resolve) => {
+            quickPick.title = "Select solution";
+            quickPick.items = solutions.map(s => new SolutionItem(s));
 
-                disposables.push(
-                    quickPick.onDidAccept(() => {
-                        resolve(quickPick.selectedItems[0].path);
-                        quickPick.dispose();
-                    })
-                );
-
-                disposables.push(
-                    quickPick.onDidHide(() => {
-                        resolve(undefined);
-                        quickPick.dispose();
-                    })
-                );
-            });
-        }
-        finally {
-            disposables.forEach(d => d.dispose());
-        }
+            return [
+                quickPick.onDidHide(() => {
+                    resolve(undefined);
+                }),
+                quickPick.onDidAccept(() => {
+                    resolve(quickPick.selectedItems[0].path);
+                }),
+            ];
+        });
     }
 
     private async getActiveSolution(): Promise<Path | undefined> {

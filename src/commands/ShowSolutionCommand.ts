@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import { Logger } from "../tools/Logger";
 import { Path } from "../tools/Path";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
 import { SelectorFactory } from "@src/selectors/SelectorFactory";
 import { Command } from "./Command";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
 
 class ProjectItem implements vscode.QuickPickItem {
     public readonly label: string;

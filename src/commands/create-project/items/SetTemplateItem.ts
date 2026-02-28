@@ -1,6 +1,6 @@
 import { Path } from "@src/tools/Path";
 import { State } from "./State";
-import { TemplateSelector } from "./selectors/TemplateSelector";
+import { TemplateSelector } from "../selectors/TemplateSelector";
 
 export class SetTemplateItem {
     public label: string;

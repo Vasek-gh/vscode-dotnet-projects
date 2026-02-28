@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-export class CommandResult<T> {
+export class ActionResult<T> {
     public constructor(
         public readonly code: number,
         public readonly data: T,
@@ -12,7 +12,7 @@ export class CommandResult<T> {
         return this.code === 0 && this.error === undefined;
     }
 
-    public async showError(title: string, modal: boolean): Promise<boolean> {
+    public async handleError(title: string, modal: boolean): Promise<boolean> {
         const success = this.success();
         if (!success) {
             const message = (this.code === 0 ? "" : `Code: ${this.code}\nError: `) + this.error;

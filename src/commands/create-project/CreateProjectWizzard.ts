@@ -3,16 +3,19 @@ import { Path } from "@src/tools/Path";
 import { Logger } from "@src/tools/Logger";
 import { SolutionSelector } from "../../selectors/SolutionSelector";
 import { TemplateSelector } from "./selectors/TemplateSelector";
-import { CreateProjectWizzardItem } from "./CreateProjectWizzardItem";
-import { State } from "./State";
-import { SetSolutionItem } from "./SetSolutionItem";
-import { CreateProjectButton } from "./CreateProjectButton";
-import { SetTemplateItem } from "./SetTemplateItem";
+import { State } from "./items/State";
+import { SetSolutionItem } from "./items/SetSolutionItem";
+import { ExecuteButton } from "./items/CreateProjectButton";
+import { SetTemplateItem } from "./items/SetTemplateItem";
 import { ProjectDirectorySelector } from "./selectors/ProjectDirectorySelector";
-import { SetDirectoryItem } from "./SetDirectoryItem";
+import { SetDirectoryItem } from "./items/SetDirectoryItem";
+import { SetAutoSolutionPrefixItem } from "./items/SetAutoSolutionPrefixItem";
 import { DotnetService } from "@src/services/dotnet/DotnetService";
-import { Preferences } from "./Preferences";
-import { SetAutoSolutionPrefixItem } from "./SetAutoSolutionPrefixItem";
+import { QuickPickUtils } from "@src/tools/QuickPickUtils";
+import { SetCreateProjectFolderItem } from "./items/SetCreateProjectFolderItem";
+import { TemplateInfo } from "@src/services/dotnet/TemplateInfo";
+import { SetCreateSolutionItem } from "./items/SetCreateSolutionItem";
+import { PreferencesService } from "@src/services/preferences/PreferencesService";
 
 export class CreateProjectWizzard {
     private readonly logger: Logger;
@@ -20,11 +23,11 @@ export class CreateProjectWizzard {
     private readonly solutionSelector: SolutionSelector;
     private readonly templateSelector: TemplateSelector;
     private readonly directorySelector: ProjectDirectorySelector;
-    private readonly preferences: Preferences;
+    private readonly preferences: PreferencesService;
 
     public constructor(
         logger: Logger,
-        preferences: Preferences,
+        preferences: PreferencesService,
         dotnet: DotnetService,
         solutionSelector: SolutionSelector,
         templateSelector: TemplateSelector,
@@ -46,85 +49,27 @@ export class CreateProjectWizzard {
 
         const items = this.prepareItems(state);
 
-        const disposables: vscode.Disposable[] = [];
-        try {
-            return await new Promise<Path | undefined>((resolve) => {
-                const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem>();
-                disposables.push(quickPick);
-
-                quickPick.title = "Create project or change settings";
-                quickPick.placeholder = "Enter new project name";
-                quickPick.ignoreFocusOut = true;
-                quickPick.keepScrollPosition = true;
-                (quickPick as any).sortByLabel = false;
-                quickPick.items = items;
-                quickPick.value = state.value;
-                quickPick.show();
-
-                disposables.push(
-                    quickPick.onDidChangeValue((value) => {
-                        state.value = value;
-                    })
-                );
-
-                disposables.push(
-                    quickPick.onDidAccept(async () => {
-                        if (quickPick.selectedItems.length === 0) {
-                            return;
-                        }
-
-                        state.lockResolve = true;
-                        quickPick.busy = true;
-                        try {
-                            const selectedItem = quickPick.selectedItems[0] as CreateProjectWizzardItem;
-
-                            const project = await selectedItem.execute(state);
-                            if (!project) {
-                                quickPick.items = items;
-                                quickPick.value = state.value;
-                                quickPick.activeItems = [selectedItem];
-                                quickPick.show();
-                                return;
-                            }
-
-                            resolve(project);
-                        }
-                        catch (e) {
-                            this.logger.exception(e);
-                        }
-                        finally {
-                            quickPick.busy = false;
-                            state.lockResolve = false;
-                        }
-                    })
-                );
-
-                disposables.push(
-                    quickPick.onDidHide(() => {
-                        if (!state.lockResolve) {
-                            resolve(undefined);
-                        }
-                    })
-                );
-            });
-        }
-        finally {
-            disposables.forEach(d => d.dispose());
-        }
+        return await QuickPickUtils.executeWizzard<State, Path>(
+            this.logger,
+            "Create project or change settings",
+            "Enter new project name",
+            state,
+            items
+        );
     }
 
     private async prepareState(): Promise<State | undefined> {
-        return (await this.dotnet.getSolutions()).length > 0
-            ? this.prepareStateBySolution()
-            : this.prepareStateByDirectory();
-    }
-
-    private async prepareStateByDirectory(): Promise<State | undefined> {
         const template = await this.templateSelector.execute(undefined);
         if (!template) {
             return undefined;
         }
 
+        return (await this.dotnet.getSolutions()).length > 0
+            ? this.prepareStateBySolution(template)
+            : this.prepareStateByDirectory(template);
+    }
+
+    private async prepareStateByDirectory(template: TemplateInfo): Promise<State | undefined> {
         const directory = await this.directorySelector.execute(undefined, undefined);
         if (!directory) {
             return undefined;
@@ -136,16 +81,13 @@ export class CreateProjectWizzard {
             directory: directory,
             template: template,
             autoSolutionPrefix: false,
-            lockResolve: false
+            createProjectFolder: true,
+            createSolution: true,
+            lockHide: false
         };
     }
 
-    private async prepareStateBySolution(): Promise<State | undefined> {
-        const template = await this.templateSelector.execute(undefined);
-        if (!template) {
-            return undefined;
-        }
-
+    private async prepareStateBySolution(template: TemplateInfo): Promise<State | undefined> {
         const solution = await this.solutionSelector.execute(undefined);
         if (!solution) {
             return undefined;
@@ -157,7 +99,9 @@ export class CreateProjectWizzard {
             directory: await this.directorySelector.getSolutionDefaultDir(solution),
             template: template,
             autoSolutionPrefix: this.preferences.getAutoSolutionPrefix(),
-            lockResolve: false
+            createProjectFolder: true,
+            createSolution: undefined,
+            lockHide: false
         };
     }
 
@@ -165,7 +109,7 @@ export class CreateProjectWizzard {
         const directoryItem = this.createDirectoryItem(state);
 
         const result: vscode.QuickPickItem[] = [
-            this.createProjectItem(state),
+            this.createExecuteButton(state),
             {
                 label: "Settings",
                 kind: vscode.QuickPickItemKind.Separator,
@@ -182,14 +126,19 @@ export class CreateProjectWizzard {
         result.push(this.createTemplateItem(state));
 
         if (state.solution !== undefined) {
-            result.push(this.createAutoSolutionPrefix(state));
+            result.push(this.createAutoSolutionPrefixItem(state));
         }
+        else {
+            result.push(this.createSetCreateSolutionItem(state));
+        }
+
+        result.push(this.createCreateProjectFolderItem(state));
 
         return result;
     }
 
-    private createProjectItem(state: State): CreateProjectButton {
-        return new CreateProjectButton(
+    private createExecuteButton(state: State): ExecuteButton {
+        return new ExecuteButton(
             state,
             this.preferences,
             this.dotnet
@@ -218,8 +167,20 @@ export class CreateProjectWizzard {
         );
     }
 
-    private createAutoSolutionPrefix(state: State): SetAutoSolutionPrefixItem {
+    private createAutoSolutionPrefixItem(state: State): SetAutoSolutionPrefixItem {
         return new SetAutoSolutionPrefixItem(
+            state
+        );
+    }
+
+    private createCreateProjectFolderItem(state: State): SetCreateProjectFolderItem {
+        return new SetCreateProjectFolderItem(
+            state
+        );
+    }
+
+    private createSetCreateSolutionItem(state: State): SetCreateSolutionItem {
+        return new SetCreateSolutionItem(
             state
         );
     }

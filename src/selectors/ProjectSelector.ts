@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { Logger } from "@src/tools/Logger";
 import { Path } from "@src/tools/Path";
+import { QuickPickUtils } from "@src/tools/QuickPickUtils";
 
 class ProjectItem implements vscode.QuickPickItem {
     public readonly label: string;
@@ -24,47 +25,33 @@ export class ProjectSelector {
     }
 
     public async execute(): Promise<Path[] | undefined> {
-        const disposables: vscode.Disposable[] = [];
-        try {
-            const quickPick = vscode.window.createQuickPick<ProjectItem>();
-            disposables.push(quickPick);
+        const items = await this.getProjects();
 
-            quickPick.busy = true;
+        return await QuickPickUtils.execute<ProjectItem, Path[]>((quickPick, resolve) => {
             quickPick.title = this.title;
             quickPick.canSelectMany = this.canSelectMany;
             quickPick.matchOnDescription = true;
-            quickPick.show();
+            quickPick.items = items;
 
-            quickPick.items = await this.getProjects();
-            quickPick.busy = false;
+            return [
+                quickPick.onDidHide(() => {
+                    resolve(undefined);
+                }),
+                quickPick.onDidAccept(async () => {
+                    const projects = quickPick.selectedItems.map(i => i.project);
 
-            return await new Promise<Path[] | undefined>((resolve) => {
-                disposables.push(
-                    quickPick.onDidAccept(async () => {
-                        const projects = quickPick.selectedItems.map(i => i.project);
+                    quickPick.busy = true;
+                    try {
+                        await this.itemsSet?.(quickPick.selectedItems.map(i => i.project));
+                    }
+                    finally {
+                        quickPick.busy = false;
+                    }
 
-                        quickPick.busy = true;
-                        try {
-                            await this.itemsSet?.(quickPick.selectedItems.map(i => i.project));
-                        }
-                        finally {
-                            quickPick.busy = false;
-                        }
-
-                        resolve(projects);
-                    })
-                );
-
-                disposables.push(
-                    quickPick.onDidHide(() => {
-                        resolve(undefined);
-                    })
-                );
-            });
-        }
-        finally {
-            disposables.forEach(d => d.dispose());
-        }
+                    resolve(projects);
+                }),
+            ];
+        });
     }
 
     private async getProjects(): Promise<ProjectItem[]> {

@@ -1,10 +1,11 @@
 import * as vscode from "vscode";
 import { Logger } from "../../tools/Logger";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
-import { Wizzard } from "./Wizzard";
+import { CreateSolutionWizzard } from "./CreateSolutionWizzard";
 import { FormatSelector } from "./selectors/FormatSelector";
 import { DirectorySelector } from "@src/selectors/DirectorySelector";
 import { Command } from "../Command";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
+import { DefaultPreferencesService } from "@src/services/preferences/DefaultPreferencesService";
 
 export class CreateSolutionCommand implements Command {
     public readonly id = "create-solution";
@@ -12,6 +13,7 @@ export class CreateSolutionCommand implements Command {
     public constructor(
         private readonly logger: Logger,
         private readonly dotnet: DotnetService,
+        private readonly preferences: DefaultPreferencesService,
     ) {
         this.logger = logger.create(this);
     }
@@ -19,10 +21,10 @@ export class CreateSolutionCommand implements Command {
     public async execute(): Promise<void> {
         this.logger.trace("Execute");
 
-        const wizzard = new Wizzard(
+        const wizzard = new CreateSolutionWizzard(
             this.logger,
             this.dotnet,
-            new FormatSelector(),
+            new FormatSelector(this.preferences),
             new DirectorySelector(),
         );
 

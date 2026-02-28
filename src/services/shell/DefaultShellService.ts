@@ -1,15 +1,16 @@
 import * as cp from "child_process";
-import { Logger } from "./Logger";
-import { CommandResult } from "./CommandResult";
+import { Logger } from "../../tools/Logger";
+import { ActionResult } from "../../tools/ActionResult";
+import { ShellService } from "./ShellService";
 
-export class Shell {
+export class DefaultShellService implements ShellService {
     public constructor(
         private readonly logger: Logger
     ) {
         this.logger = logger.create(this);
     }
 
-    public async exec(command: string, cwd?: string): Promise<CommandResult<string>> {
+    public async exec(command: string, cwd?: string): Promise<ActionResult<string>> {
         try {
             this.logger.trace(`Execute at ${cwd}: ${command}`);
 
@@ -36,7 +37,7 @@ export class Shell {
 
                 this.logger.error(`Fail with code: ${code} output: ${message}`);
 
-                return new CommandResult(
+                return new ActionResult(
                     code ?? 0,
                     "",
                     message
@@ -45,7 +46,7 @@ export class Shell {
 
             this.logger.trace(`Sucess:\n${out}`);
 
-            return new CommandResult(
+            return new ActionResult(
                 0,
                 out,
                 undefined
@@ -54,7 +55,7 @@ export class Shell {
         catch (e: any) {
             this.logger.exception(e);
 
-            return new CommandResult(
+            return new ActionResult(
                 Number.MAX_SAFE_INTEGER,
                 "",
                 e.message

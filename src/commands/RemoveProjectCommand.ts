@@ -1,9 +1,9 @@
 import { Logger } from "../tools/Logger";
 import { Path } from "../tools/Path";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
 import { ProjectSelector } from "@src/selectors/ProjectSelector";
 import { SelectorFactory } from "@src/selectors/SelectorFactory";
 import { Command } from "./Command";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
 
 export class RemoveProjectCommand implements Command {
     public readonly id = "remove-project";

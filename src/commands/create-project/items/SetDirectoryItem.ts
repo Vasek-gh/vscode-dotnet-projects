@@ -1,10 +1,8 @@
-import * as vscode from "vscode";
 import { Path } from "@src/tools/Path";
-import { CreateProjectWizzardItem } from "./CreateProjectWizzardItem";
 import { State } from "./State";
-import { ProjectDirectorySelector } from "./selectors/ProjectDirectorySelector";
+import { ProjectDirectorySelector } from "../selectors/ProjectDirectorySelector";
 
-export class SetDirectoryItem implements CreateProjectWizzardItem {
+export class SetDirectoryItem {
     public label: string;
     public description: string;
     public readonly alwaysShow: boolean = true;

@@ -1,6 +1,7 @@
-import { SlnFormat } from "@src/services/dotnet/SlnFormat";
-import { QuickPickTool } from "@src/tools/QuickPickTool";
 import * as vscode from "vscode";
+import { SlnFormat } from "@src/services/dotnet/SlnFormat";
+import { QuickPickUtils } from "@src/tools/QuickPickUtils";
+import { PreferencesService } from "@src/services/preferences/PreferencesService";
 
 class FormatItem implements vscode.QuickPickItem {
     public constructor(
@@ -16,15 +17,25 @@ class FormatItem implements vscode.QuickPickItem {
 }
 
 export class FormatSelector {
-    public static readonly slnFormat: FormatItem = new FormatItem(SlnFormat.sln.title, SlnFormat.sln, "Solution file");
-    public static readonly slnxFormat: FormatItem = new FormatItem(SlnFormat.slnx.title, SlnFormat.slnx, "XML-based solution file");
+    public static readonly slnFormat: FormatItem = new FormatItem(
+        SlnFormat.sln.title,
+        SlnFormat.sln,
+        "Solution file"
+    );
+
+    public static readonly slnxFormat: FormatItem = new FormatItem(
+        SlnFormat.slnx.title,
+        SlnFormat.slnx,
+        "XML-based solution file"
+    );
 
     public constructor(
+        private readonly preferences: PreferencesService
     ) {
     }
 
     public getDefault(): SlnFormat {
-        return SlnFormat.sln;
+        return this.preferences.getSolutionFormat();
     }
 
     public async execute(current: SlnFormat | undefined): Promise<SlnFormat | undefined> {
@@ -35,11 +46,17 @@ export class FormatSelector {
 
         const currentItem = items.find(i => i.format === current);
 
-        return await QuickPickTool.execute(
-            "Select solution directory",
+        var result = await QuickPickUtils.executeSelector(
+            "Select solution format",
             "Start typing for filtering",
             items,
             currentItem
         );
+
+        if (result) {
+            this.preferences.setSolutionFormat(result);
+        }
+
+        return result;
     }
 }

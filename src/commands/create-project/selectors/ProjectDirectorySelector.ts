@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
-import { DotnetService } from "@src/services/dotnet/DotnetService";
 import { Path } from "@src/tools/Path";
 import { Utils } from "@src/tools/Utils";
 import { DirectorySelector } from "@src/selectors/DirectorySelector";
+import { DotnetService } from "@src/services/dotnet/DotnetService";
+import { QuickPickUtils } from "@src/tools/QuickPickUtils";
 
 class DirectoryItem implements vscode.QuickPickItem {
     public readonly label: string;
@@ -41,32 +42,19 @@ export class ProjectDirectorySelector {
             ];
         }
 
-        const disposables: vscode.Disposable[] = [];
-        try {
-            return await new Promise<Path | undefined>((resolve) => {
-                const quickPick = vscode.window.createQuickPick<DirectoryItem>();
-                quickPick.title = "Select directory";
-                quickPick.items = dirs.map(d => new DirectoryItem(solution, d));
-                quickPick.show();
+        return await QuickPickUtils.execute<DirectoryItem, Path>((quickPick, resolve) => {
+            quickPick.title = "Select directory";
+            quickPick.items = dirs.map(d => new DirectoryItem(solution, d));
 
-                disposables.push(
-                    quickPick.onDidAccept(() => {
-                        resolve(quickPick.selectedItems[0].directory);
-                        quickPick.dispose();
-                    })
-                );
-
-                disposables.push(
-                    quickPick.onDidHide(() => {
-                        resolve(undefined);
-                        quickPick.dispose();
-                    })
-                );
-            });
-        }
-        finally {
-            disposables.forEach(d => d.dispose());
-        }
+            return [
+                quickPick.onDidHide(() => {
+                    resolve(undefined);
+                }),
+                quickPick.onDidAccept(() => {
+                    resolve(quickPick.selectedItems[0].directory);
+                }),
+            ];
+        });
     }
 
     public async getSolutionDefaultDir(solution: Path): Promise<Path> {

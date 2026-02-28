@@ -5,5 +5,5 @@ export interface State {
     value: string;
     format: SlnFormat;
     directory: Path;
-    lockResolve: boolean;
+    lockHide: boolean;
 }

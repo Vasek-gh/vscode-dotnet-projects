@@ -1,11 +1,9 @@
-import * as vscode from "vscode";
 import { Path } from "@src/tools/Path";
-import { CreateProjectWizzardItem } from "./CreateProjectWizzardItem";
-import { SolutionSelector } from "../../selectors/SolutionSelector";
+import { SolutionSelector } from "../../../selectors/SolutionSelector";
 import { State } from "./State";
 import { SetDirectoryItem } from "./SetDirectoryItem";
 
-export class SetSolutionItem implements CreateProjectWizzardItem {
+export class SetSolutionItem {
     public label: string;
     public description: string;
     public readonly alwaysShow: boolean = true;
