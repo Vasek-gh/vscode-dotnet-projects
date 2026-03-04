@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { Path } from "./Path";
 
 export class Utils {
+    public static prefix = "DotProj";
     public static templateSelector = ":";
 
     public static getTypeName<T>(obj: T): string {

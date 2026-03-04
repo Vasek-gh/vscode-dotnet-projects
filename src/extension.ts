@@ -19,8 +19,6 @@ import { AddProjectReferenceCommand } from "./commands/AddProjectReferencesComma
 import { RemoveProjectReferencesCommand } from "./commands/RemoveProjectReferencesCommand";
 import { SelectorFactory } from "./selectors/SelectorFactory";
 import { Command } from "./commands/Command";
-import { DotnetService } from "./services/dotnet/DotnetService";
-import { ShellService } from "./services/shell/ShellService";
 
 /**
  * Entry point of this extension

@@ -3,8 +3,8 @@ import { Extension } from "@src/tools/Extension";
 import { Path } from "@src/tools/Path";
 
 export class ExtensionMock implements Extension {
-    public readonly id: string = "vs-marketplace-vasek.vscode-dotnet-projects";
-    public readonly name: string = "vscode-dotnet-projects";
+    public readonly id: string = "vs-marketplace-vasek.vscode-dot-proj";
+    public readonly name: string = "vscode-dot-proj";
     public readonly version: string = "0.0.0";
     public readonly extensionDir: Path;
 

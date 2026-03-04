@@ -1,4 +1,4 @@
-# vscode-dotnet-projects
+# vscode-dot-proj
 
 ![sample1](./docs/images/readme.gif)
 

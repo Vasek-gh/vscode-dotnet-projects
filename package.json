@@ -1,6 +1,6 @@
 {
-    "name": "vscode-dotnet-projects",
-    "displayName": "vscode-dotnet-projects",
+    "name": "vscode-dot-proj",
+    "displayName": "vscode-dot-proj",
     "description": "todo",
     "version": "0.9.0",
     "license": "MIT",
@@ -60,47 +60,47 @@
     "contributes": {
         "commands": [
             {
-                "command": "vscode-dotnet-projects.create-solution",
+                "command": "vscode-dot-proj.create-solution",
                 "title": "Create solution",
-                "category": "Dotnet Solution"
+                "category": "DotProj: Solution"
             },
             {
-                "command": "vscode-dotnet-projects.select-solution",
+                "command": "vscode-dot-proj.select-solution",
                 "title": "Select solution",
-                "category": "Dotnet Solution"
+                "category": "DotProj: Solution"
             },
             {
-                "command": "vscode-dotnet-projects.show-solution",
+                "command": "vscode-dot-proj.show-solution",
                 "title": "Show solution",
-                "category": "Dotnet Solution"
+                "category": "DotProj: Solution"
             },
 
             {
-                "command": "vscode-dotnet-projects.create-project",
+                "command": "vscode-dot-proj.create-project",
                 "title": "Create project",
-                "category": "Dotnet Solution"
+                "category": "DotProj: Solution"
             },
             {
-                "command": "vscode-dotnet-projects.add-project",
+                "command": "vscode-dot-proj.add-project",
                 "title": "Add project",
-                "category": "Dotnet Solution"
+                "category": "DotProj: Solution"
             },
             {
-                "command": "vscode-dotnet-projects.remove-project",
+                "command": "vscode-dot-proj.remove-project",
                 "title": "Remove project",
-                "category": "Dotnet Solution"
+                "category": "DotProj: Solution"
             },
 
 
             {
-                "command": "vscode-dotnet-projects.add-project-reference",
+                "command": "vscode-dot-proj.add-project-reference",
                 "title": "Add project reference",
-                "category": "Dotnet Projects"
+                "category": "DotProj: Project"
             },
             {
-                "command": "vscode-dotnet-projects.remove-project-reference",
+                "command": "vscode-dot-proj.remove-project-reference",
                 "title": "Remove project reference",
-                "category": "Dotnet Projects"
+                "category": "DotProj: Project"
             }
         ],
         "keybindings": [
