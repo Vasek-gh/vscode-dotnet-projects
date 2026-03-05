@@ -8,6 +8,7 @@ import { EntitiesKeys } from "../../tools/EntitiesKeys";
 import { SlnFormat } from "./SlnFormat";
 import { ShellService } from "../shell/ShellService";
 import { DotnetService } from "./DotnetService";
+import { PackageInfo } from "./PackageInfo";
 
 export class DefaultDotnetService implements DotnetService {
     private readonly logger: Logger;
@@ -101,6 +102,26 @@ export class DefaultDotnetService implements DotnetService {
         });
     }
 
+    public async getPackages(project: Path, outdated: boolean): Promise<ActionResult<PackageInfo[]>> {
+        const cwd = project.getDirectory();
+        const outdatedOpt = outdated ? " --outdated" : "";
+        const options = `${outdatedOpt} --format json`;
+
+        let commandResult = await this.shell.exec(`dotnet list package ${project.uri.fsPath} ${options}`, cwd);
+        if (!commandResult.success()) {
+            // "verb first" not support slnx, trying with new "noun first"
+            commandResult = await this.shell.exec(`dotnet package list --project ${project.uri.fsPath} ${options}`, cwd);
+        }
+
+        if (!commandResult.success()) {
+            return commandResult.recreateError([]);
+        }
+
+        const rawObject = JSON.parse(commandResult.data);
+
+        return ActionResult.createSuccess([]);
+    }
+
     public async createSolution(directory: Path, solutionName: string, format: SlnFormat): Promise<ActionResult<Path | undefined>> {
         const nameArg = solutionName.length === 0
             ? ""
@@ -110,13 +131,9 @@ export class DefaultDotnetService implements DotnetService {
             ? `dotnet new sln ${nameArg} -f sln`
             : `dotnet new sln ${nameArg} -f slnx`;
 
-        const commandResult = await this.shell.exec(command, directory.uri.fsPath);
+        const commandResult = await this.shell.exec(command, directory);
         if (!commandResult.success()) {
-            return new ActionResult<undefined>(
-                commandResult.code,
-                undefined,
-                commandResult.error
-            );
+            return commandResult.recreateError(undefined);
         }
 
         return new ActionResult<Path>(
@@ -128,7 +145,7 @@ export class DefaultDotnetService implements DotnetService {
 
     public async createProject(template: TemplateInfo, directory: Path, projectName: string): Promise<ActionResult<Path | undefined>> {
         const command = `dotnet new ${template.shortName} --language ${template.language} --output ${projectName}`;
-        const commandResult = await this.shell.exec(command, directory.uri.fsPath);
+        const commandResult = await this.shell.exec(command, directory);
         if (!commandResult.success()) {
             return new ActionResult<undefined>(
                 0,
@@ -152,7 +169,7 @@ export class DefaultDotnetService implements DotnetService {
         const inRootOpt = inRoot ? " --in-root" : "";
         const command = `dotnet sln "${solution.uri.fsPath}" add "${project.uri.fsPath}" ${inRootOpt}`;
 
-        const commandResult = await this.shell.exec(command, solution.getDirectory().uri.fsPath);
+        const commandResult = await this.shell.exec(command, solution.getDirectory());
 
         return new ActionResult<undefined>(
             0,
@@ -164,7 +181,7 @@ export class DefaultDotnetService implements DotnetService {
     public async removeProject(solution: Path, project: Path): Promise<ActionResult<undefined>> {
         const command = `dotnet sln "${solution.uri.fsPath}" remove "${project.uri.fsPath}"`;
 
-        const commandResult = await this.shell.exec(command, solution.getDirectory().uri.fsPath);
+        const commandResult = await this.shell.exec(command, solution.getDirectory());
 
         return new ActionResult<undefined>(
             0,

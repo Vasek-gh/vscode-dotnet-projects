@@ -101,6 +101,12 @@
                 "command": "vscode-dot-proj.remove-project-reference",
                 "title": "Remove project reference",
                 "category": "DotProj: Project"
+            },
+
+            {
+                "command": "vscode-dot-proj.update-packages-references",
+                "title": "Update packages",
+                "category": "DotProj: Nuget"
             }
         ],
         "keybindings": [

@@ -19,6 +19,7 @@ import { AddProjectReferenceCommand } from "./commands/AddProjectReferencesComma
 import { RemoveProjectReferencesCommand } from "./commands/RemoveProjectReferencesCommand";
 import { SelectorFactory } from "./selectors/SelectorFactory";
 import { Command } from "./commands/Command";
+import { UpdatePackagesReferencesCommand } from "./commands/update-packages-references/UpdatePackagesReferencesCommand";
 
 /**
  * Entry point of this extension
@@ -67,6 +68,8 @@ class Host implements Extension, vscode.Disposable {
 
             this.registerCommand(new AddProjectReferenceCommand(this.logger, dotnet));
             this.registerCommand(new RemoveProjectReferencesCommand(this.logger, dotnet));
+
+            this.registerCommand(new UpdatePackagesReferencesCommand(this.logger, dotnet, preferences));
 
             this.logger.info("Initialization complete");
         }

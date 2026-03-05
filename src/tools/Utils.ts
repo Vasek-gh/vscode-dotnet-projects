@@ -23,6 +23,20 @@ export class Utils {
             : Path.fromDir(workspaceFolder.uri);
     }
 
+    public static getPathCaption(path: Path): string {
+        const workspaceFolder = this.getRootDirectory(path);
+        if (!workspaceFolder) {
+            return path.fullPath.toString();
+        }
+
+        var result = path.getRelative(workspaceFolder);
+        if (!result) {
+            return path.fullPath.toString();
+        }
+
+        return result;
+    }
+
     public static getFileVars(file: Path, baseDir: Path): any {
         const dir = file.getDirectory();
 

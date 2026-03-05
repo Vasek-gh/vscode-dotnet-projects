@@ -2,6 +2,8 @@ import * as cp from "child_process";
 import { Logger } from "../../tools/Logger";
 import { ActionResult } from "../../tools/ActionResult";
 import { ShellService } from "./ShellService";
+import { Path } from "@src/tools/Path";
+import { Utils } from "@src/tools/Utils";
 
 export class DefaultShellService implements ShellService {
     public constructor(
@@ -10,15 +12,20 @@ export class DefaultShellService implements ShellService {
         this.logger = logger.create(this);
     }
 
-    public async exec(command: string, cwd?: string): Promise<ActionResult<string>> {
+    public async exec(command: string, cwd?: Path): Promise<ActionResult<string>> {
         try {
             this.logger.trace(`Execute at ${cwd}: ${command}`);
+            if (cwd?.isFile()) {
+                const error = `cwd ${cwd.uri.fsPath} is file`;
+                Utils.showErrorMessage("Shell execute", error, false);
+                throw new Error(error);
+            }
 
             const [error, out, err] = await new Promise<[cp.ExecFileException | null, string, string]>((resolve, reject) => {
                 cp.exec(
                     command,
                     {
-                        cwd: cwd,
+                        cwd: cwd?.uri.fsPath,
                     },
                     (error, out, err) => {
                         return resolve([error, out, err]);
